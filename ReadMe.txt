@@ -10,5 +10,5 @@ Ahmed Tourkey
 ---------------------------------
 
 EEP Sub-team:
-Sherif Darwesh
+Sherif Darwish
 Abd el-rahman Abbas
