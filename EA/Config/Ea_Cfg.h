@@ -31,6 +31,12 @@ module (NvM_JobEndNotification).*/
 #endif
 
 
+
+/*Mapped to the job error notification routine provided by the upper layer module (NvM_JobErrorNotification)*/
+#if NvMPollingMode == (EcucBooleanParamDef)false 
+#define EaNvmJobErrorNotification NvM_JobErrorNotification
+#endif
+
 /*Pre-processor switch to enable and disable the polling mode for this 
 module.
 true: Polling mode enabled, callback functions (provided to EEP module) 
