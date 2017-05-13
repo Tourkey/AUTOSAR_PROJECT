@@ -43,7 +43,13 @@ typedef struct{
 #define EepWriteTime (float)0//Maximum time for writing one EEPROM data unit.
 #define EepWriteUnitSize 0//Size of smallest writeable EEPROM data unit in bytes.
 //****************************************************************************************************************************
-
+/*typedef enum {
+     EEP_E_COMPARE_FAILED=0,
+     EEP_E_ERASE_FAILED,
+     EEP_E_WRITE_FAILED,
+     EEP_E_READ_FAILED
+}EepDemEventParameter;*/
+//****************************************************************************************************************************
 
 
 
