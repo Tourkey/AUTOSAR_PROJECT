@@ -6,8 +6,12 @@
  */
 
 #ifndef EEP_CFG_H_
+
 #define EEP_CFG_H_
+
 #include "Memlf_Types.h"
+
+
 #define EepDevErrorDetect True
 #define EepDriverIndex 1
 #define EepUseInterrupts True
@@ -31,6 +35,7 @@ typedef struct{
 //*****************************************************************************************************************************
 //EepPublishedInformation
 //****************************************************************************************************************************
+
 #define EepAllowedWriteCycles 0//Specified maximum number of write cycles
 #define EepEraseTime (float)0//Maximum time for erasing one EEPROM data unit.
 #define EepEraseUnitSize 0//Size of smallest erasable EEPROM data unit in bytes.
@@ -42,6 +47,7 @@ typedef struct{
 #define EepTotalSize 0//Total size of EEPROM in bytes.
 #define EepWriteTime (float)0//Maximum time for writing one EEPROM data unit.
 #define EepWriteUnitSize 0//Size of smallest writeable EEPROM data unit in bytes.
+
 //****************************************************************************************************************************
 /*typedef enum {
      EEP_E_COMPARE_FAILED=0,

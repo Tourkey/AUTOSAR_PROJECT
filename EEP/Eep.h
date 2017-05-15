@@ -12,11 +12,11 @@
 //optional//
 //#include "Spi.h"
 //Eep_ConfigType//
-typedef struct {uint x=0;}Eep_ConfigType;
+
 //Eep_AddressType//
-typedef uint Eep_AddressType;
+typedef uint32_t Eep_AddressType;
 //Eep_LengthType//
-typedef uint Eep_LengthType;
+typedef uint32_t Eep_LengthType;
 //Init//
 extern void Eep_Init( const Eep_ConfigType* ConfigPtr );
 extern void Eep_SetMode( MemIf_ModeType Mode );
