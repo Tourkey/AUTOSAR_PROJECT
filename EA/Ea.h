@@ -21,7 +21,6 @@
 extern void Ea_JobEndNotification(void);
 extern void Ea_JobErrorNotification(void);
 #define EaPollingModeEnabled true
-
 #else
 	#define EaPollingModeEnabled false
 #endif
