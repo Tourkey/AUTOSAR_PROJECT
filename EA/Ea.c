@@ -13,6 +13,12 @@ static uint16 local_Length;
 static MemIf_StatusType MemIf_Status = MEMIF_UNINIT;
 static MemIf_JobResultType MemIf_JobResult ;
 
+static MemIf_ModeType Local_Mode;
+
+static uint8 Local_ChangeModFlag = 0;
+
+
+//////////////////// Ea_Init Funftion ////////////////////////////
 
 /**
 *@func	init function 
@@ -31,13 +37,46 @@ extern void Ea_Init(const Ea_ConfigType* ConfigPtr)
 	MemIf_Status = MEMIF_IDLE;
 }
 
+
+//////////////////// Ea_SetMode Funftion ////////////////////////////
+
+#ifdef EaSetModeSupported
+
+/**
+*@func	SetMode function 
+*@brief Sets the mode of reading and writing operations.
+*@param Mode : The mode of opertaion, type MemIf_ModeType, Range:[MEMIF_MODE_SLOW,MEMIF_MODE_FAST].
+*@return 	Void
+*/
+
 extern void Ea_SetMode(MemIf_ModeType Mode)
 {
-
+	#if EaDevErrorDetect == true
+		if(MemIf_Status == MEMIF_UNINIT)
+		{
+			//raise the development error EA_E_UNINIT
+			return	;
+		}
+		
+		if(MemIf_Status == MEMIF_BUSY)
+		{
+			//raise the development error EA_E_UNINIT
+			return	;
+		}
+		
+	#endif
+	
+	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
+	{
+		Local_Mode = Mode ;
+		Local_ChangeModFlag =1; // to be excecuted asynchronously inside the main function 
+	}
 }
 
 
+#endif
 
+//////////////////// Ea_Read Funftion ////////////////////////////
 
 /**
 *@func	read function 
@@ -99,33 +138,54 @@ extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataB
 		return E_OK;
 	}
 }
+
+//////////////////// Ea_Write Funftion ////////////////////////////
+
 extern Std_ReturnType Ea_Write(uint16 BlockNumber,const uint8* DataBufferPtr)
 {
 }
+
+//////////////////// Ea_Cancel Funftion ////////////////////////////
 extern void Ea_Cancel(void)
 {
 }
+
+//////////////////// Ea_GetStatus Funftion ////////////////////////////
 extern MemIf_StatusType Ea_GetStatus(void)
 {
 }
+
+//////////////////// Ea_GetJobResult Funftion ////////////////////////////
 extern MemIf_JobResultType Ea_GetJobResult(void)
 {
 }
+
+//////////////////// Ea_InvalidateBlock Funftion ////////////////////////////
 extern Std_ReturnType Ea_InvalidateBlock(uint16 BlockNumber)
 {
 }
+
+//////////////////// Ea_GetVersionInfo Funftion ////////////////////////////
 extern void Ea_GetVersionInfo(Std_VersionInfoType* VersionInfoPtr)
 {
 }
+
+//////////////////// Ea_EraseImmediateBlock Funftion ////////////////////////////
 extern Std_ReturnType Ea_EraseImmediateBlock(uint16 BlockNumber)
 {
 }
+
+//////////////////// Ea_JobEndNotification Funftion ////////////////////////////
 extern void Ea_JobEndNotification(void)
 {
 }
+
+//////////////////// Ea_JobErrorNotification Funftion ////////////////////////////
 extern void Ea_JobErrorNotification(void)
 {
 }
+
+//////////////////// Ea_MainFunction Funftion ////////////////////////////
 extern void Ea_MainFunction(void)
 {
 }
