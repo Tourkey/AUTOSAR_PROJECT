@@ -29,7 +29,7 @@ static uint8 Local_NumberOfPhysicalPagesPerBlock;
 */
 extern void Ea_Init(const Ea_ConfigType* ConfigPtr)
 {
-	MemIf_Status = 		MEMIF_BUSY_INTERNAL;
+	MemIf_Status = 	MEMIF_BUSY_INTERNAL;
 	
 	local_BlockNumber = 0;
 	local_BlockOffset = 0;
@@ -83,6 +83,10 @@ extern void Ea_SetMode(MemIf_ModeType Mode)
 		MemIf_Mode = Mode ;
 		Local_ChangeModeFlag =1; // to be excecuted asynchronously inside the main function 
 	}
+	else 
+	{
+		;
+	}
 }
 
 
@@ -102,7 +106,7 @@ extern void Ea_SetMode(MemIf_ModeType Mode)
 */
 extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataBufferPtr,uint16 Length)
 {
-		if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
+	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
 	{
 		local_BlockNumber = BlockNumber;
 		local_BlockOffset = BlockOffset;
@@ -111,15 +115,12 @@ extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataB
 		
 		MemIf_Status = MEMIF_BUSY;
 		MemIf_JobResult = MEMIF_JOB_PENDING;
+		
 		return E_OK;
 	}
+	
 	else
 	{
-		if(MemIf_Status == MEMIF_UNINIT)
-		{
-			return E_NOT_OK;
-		}
-		
 		#if EaDevErrorDetect == true
 			if(MemIf_Status == MEMIF_UNINIT)
 			{
@@ -152,10 +153,27 @@ extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataB
 				return E_NOT_OK;
 			}
 		#endif
+		
+		if(MemIf_Status == MEMIF_UNINIT)
+		{
+			return E_NOT_OK;
+		}
+
 	}
 }
 
 //////////////////// Ea_Write Funftion ////////////////////////////
+
+/**
+*@func	Write function 
+*@brief Writes the contents of the DataBufferPtr to the block BlockNumber. 
+*@param BlockNumber : Number of logical block, also denoting start address of that block in EEPROM.
+*@param DataBufferPtr : Pointer to data buffer.
+*@return 	E_OK: The requested job has been accepted by the EA module.
+*			E_NOT_OK: The requested job has not been accepted by the EA module.
+*/
+
+
 extern Std_ReturnType Ea_Write(uint16 BlockNumber,const uint8* DataBufferPtr)
 {
 	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
@@ -202,8 +220,36 @@ extern Std_ReturnType Ea_Write(uint16 BlockNumber,const uint8* DataBufferPtr)
 }
 
 //////////////////// Ea_Cancel Funftion ////////////////////////////
+/**
+*@func	Cancel function 
+*@brief Cancels the ongoing asynchronous operation.
+*/
+
+
 extern void Ea_Cancel(void)
 {
+	#if EaDevErrorDetect == true
+		if(MemIf_Status == MEMIF_UNINIT)
+		{
+			//raise the development error EA_E_UNINIT
+			return ;
+		}
+		
+		if(MemIf_Status != MEMIF_BUSY)
+		{
+			// raise the development error EA_E_INVALID_CANCEL.
+			return ;
+		}
+		
+	#endif
+	
+	if (MemIf_Status == MEMIF_BUSY)
+	{
+		Eep_Cancel();
+		MemIf_Status = MEMIF_IDLE;
+		MemIf_JobResultType = MEMIF_JOB_CANCELED ;
+	}
+	
 }
 
 //////////////////// Ea_GetStatus Funftion ////////////////////////////
@@ -223,8 +269,30 @@ extern MemIf_StatusType Ea_GetStatus(void)
 }
 
 //////////////////// Ea_GetJobResult Funftion ////////////////////////////
+
+/**
+*@func	GetJobResult function 
+*@brief Service to return the JobResult.
+*@return 	MemIf_JobResultType 
+*MEMIF_JOB_OK: The last job has been finished successfully. 
+*MEMIF_JOB_PENDING: The last job is waiting for execution or currently being executed. 
+*MEMIF_JOB_CANCELED: The last job has been canceled (which means it failed). 
+*MEMIF_JOB_FAILED: The last job was not finished successfully (it failed). 
+*MEMIF_BLOCK_INCONSISTENT: The requested block is inconsistent, it may contain corrupted data.
+*/
+
 extern MemIf_JobResultType Ea_GetJobResult(void)
 {
+	#if EaDevErrorDetect == true
+	if (MemIf_Status == MEMIF_UNINIT)
+	{
+		// raise the development error EA_E_UNINIT
+		return MEMIF_JOB_FAILED ;
+	}
+	#endif
+	
+	return MemIf_JobResult;
+	
 }
 
 //////////////////// Ea_InvalidateBlock Funftion ////////////////////////////
@@ -235,6 +303,7 @@ extern Std_ReturnType Ea_InvalidateBlock(uint16 BlockNumber)
 //////////////////// Ea_GetVersionInfo Funftion ////////////////////////////
 extern void Ea_GetVersionInfo(Std_VersionInfoType* VersionInfoPtr)
 {
+	
 }
 
 //////////////////// Ea_EraseImmediateBlock Funftion ////////////////////////////
