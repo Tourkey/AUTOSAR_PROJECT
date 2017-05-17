@@ -102,43 +102,7 @@ extern void Ea_SetMode(MemIf_ModeType Mode)
 */
 extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataBufferPtr,uint16 Length)
 {
-	if(MemIf_Status == MEMIF_UNINIT)
-	{
-		return E_NOT_OK;
-	}
-	#if EaDevErrorDetect == true
-		if(MemIf_Status == MEMIF_UNINIT)
-		{
-			//raise the development error EA_E_UNINIT
-			return E_NOT_OK;
-		}
-		if(MemIf_Status == MEMIF_BUSY)
-		{
-			// raise the development error EA_E_BUSY 
-			return E_NOT_OK;
-		}
-		if((blockNumber == 0) || (blockNumber == 0xffff) )
-		{
-			// raise the development error EA_E_INVALID_BLOCK_NO
-			return E_NOT_OK;
-		}
-		if(BlockOffset >= EaBlockNumber )
-		{
-			// raise the development error EA_E_INVALID_BLOCK_OFS
-			return E_NOT_OK;
-		}
-	/*	if((Length+BlockOffset) >= EaBlockNumber )
-		{
-			// raise the development error EA_E_INVALID_BLOCK_LEN
-			return E_NOT_OK;
-		}*/
-		if(DataBufferPtr == NULL_PTR  )
-		{
-			// raise the development error EA_E_PARAM_POINTER
-			return E_NOT_OK;
-		}
-	#endif
-	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
+		if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
 	{
 		local_BlockNumber = BlockNumber;
 		local_BlockOffset = BlockOffset;
@@ -148,6 +112,46 @@ extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataB
 		MemIf_Status = MEMIF_BUSY;
 		MemIf_JobResult = MEMIF_JOB_PENDING;
 		return E_OK;
+	}
+	else
+	{
+		if(MemIf_Status == MEMIF_UNINIT)
+		{
+			return E_NOT_OK;
+		}
+		
+		#if EaDevErrorDetect == true
+			if(MemIf_Status == MEMIF_UNINIT)
+			{
+				//raise the development error EA_E_UNINIT
+				return E_NOT_OK;
+			}
+			if(MemIf_Status == MEMIF_BUSY)
+			{
+				// raise the development error EA_E_BUSY 
+				return E_NOT_OK;
+			}
+			if((blockNumber == 0) || (blockNumber == 0xffff) )
+			{
+				// raise the development error EA_E_INVALID_BLOCK_NO
+				return E_NOT_OK;
+			}
+			if(BlockOffset >= EaBlockNumber )
+			{
+				// raise the development error EA_E_INVALID_BLOCK_OFS
+				return E_NOT_OK;
+			}
+		/*	if((Length+BlockOffset) >= EaBlockNumber )
+			{
+				// raise the development error EA_E_INVALID_BLOCK_LEN
+				return E_NOT_OK;
+			}*/
+			if(DataBufferPtr == NULL_PTR  )
+			{
+				// raise the development error EA_E_PARAM_POINTER
+				return E_NOT_OK;
+			}
+		#endif
 	}
 }
 
@@ -203,8 +207,19 @@ extern void Ea_Cancel(void)
 }
 
 //////////////////// Ea_GetStatus Funftion ////////////////////////////
+/**
+*@func	GetStatus function 
+*@brief get the status of MEMIF.
+*@return 	return MemIf_StatusType 
+*MEMIF_UNINIT: The EA module has not been initialized (yet).
+*MEMIF_IDLE: The EA module is currently idle.
+*MEMIF_BUSY: The EA module is currently busy.
+*MEMIF_BUSY_INTERNAL: The EA module is currently busy with internal management operations.
+*/
+
 extern MemIf_StatusType Ea_GetStatus(void)
 {
+	return MemIf_Status;		
 }
 
 //////////////////// Ea_GetJobResult Funftion ////////////////////////////
