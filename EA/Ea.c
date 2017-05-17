@@ -13,10 +13,12 @@ static uint16 local_Length;
 static MemIf_StatusType MemIf_Status = MEMIF_UNINIT;
 static MemIf_JobResultType MemIf_JobResult ;
 
-static MemIf_ModeType Local_Mode;
+static MemIf_ModeType MemIf_Mode;
 
-static uint8 Local_ChangeModFlag = 0;
+static uint8 Local_ChangeModeFlag;
 
+static uint16 Local_PhysicalAddress;
+static uint8 Local_NumberOfPhysicalPagesPerBlock;
 
 //////////////////// Ea_Init Funftion ////////////////////////////
 
@@ -27,12 +29,22 @@ static uint8 Local_ChangeModFlag = 0;
 */
 extern void Ea_Init(const Ea_ConfigType* ConfigPtr)
 {
-	MemIf_Status = MEMIF_BUSY_INTERNAL;
+	MemIf_Status = 		MEMIF_BUSY_INTERNAL;
 	
 	local_BlockNumber = 0;
 	local_BlockOffset = 0;
 	local_DataBufferPtr = NULL_PTR;
 	local_Length = 0;
+	Local_PhysicalAddress=0;
+	MemIf_Mode = MEMIF_MODE_SLOW;
+	Local_ChangeModeFlag=0;
+	
+	Local_NumberOfPhysicalPagesPerBlock=(EaBlockSize / EaVirtualPageSize);	
+	
+	if ( (EaBlockSize > EaVirtualPageSize) && ( (EaBlockSize % EaVirtualPageSize) > 0 ) )
+	{
+	Local_NumberOfPhysicalPagesPerBlock+=1;
+	}
 	
 	MemIf_Status = MEMIF_IDLE;
 }
@@ -60,7 +72,7 @@ extern void Ea_SetMode(MemIf_ModeType Mode)
 		
 		if(MemIf_Status == MEMIF_BUSY)
 		{
-			//raise the development error EA_E_UNINIT
+			//raise the development error EA_E_BUSY
 			return	;
 		}
 		
@@ -68,8 +80,8 @@ extern void Ea_SetMode(MemIf_ModeType Mode)
 	
 	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
 	{
-		Local_Mode = Mode ;
-		Local_ChangeModFlag =1; // to be excecuted asynchronously inside the main function 
+		MemIf_Mode = Mode ;
+		Local_ChangeModeFlag =1; // to be excecuted asynchronously inside the main function 
 	}
 }
 
@@ -140,9 +152,49 @@ extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataB
 }
 
 //////////////////// Ea_Write Funftion ////////////////////////////
-
 extern Std_ReturnType Ea_Write(uint16 BlockNumber,const uint8* DataBufferPtr)
 {
+	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
+	{
+		Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * Local_NumberOfPhysicalPagesPerBlock ) ;
+		local_Length = EaBlockSize;
+		local_DataBufferPtr = DataBufferPtr ;
+		
+		MemIf_Status = MEMIF_BUSY;
+		MemIf_JobResult = MEMIF_JOB_PENDING ;
+		
+		return E_OK;
+	}
+	
+	else
+	{
+		#if EaDevErrorDetect == true
+			if(MemIf_Status == MEMIF_UNINIT)
+			{
+				//raise the development error EA_E_UNINIT
+				return E_NOT_OK;
+			}
+			if(MemIf_Status == MEMIF_BUSY)
+			{
+				// raise the development error EA_E_BUSY 
+				return E_NOT_OK;
+			}
+			if((blockNumber == 0) || (blockNumber == 0xffff) )
+			{
+				// raise the development error EA_E_INVALID_BLOCK_NO
+				return E_NOT_OK;
+			}
+			if(DataBufferPtr == NULL_PTR  )
+			{
+				// raise the development error EA_E_PARAM_POINTER
+				return E_NOT_OK;
+			}
+			
+		#endif
+
+		return E_NOT_OK;
+
+	}
 }
 
 //////////////////// Ea_Cancel Funftion ////////////////////////////
