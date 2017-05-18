@@ -13,6 +13,8 @@ static uint16 local_BlockOffset;
 static uint8* local_DataBufferPtr;
 static uint16 local_Length;
 static EcucBooleanParamDef local_IsInvalidateRequest;
+static EcucBooleanParamDef local_IsEraseRequest;
+
 <<<<<<< HEAD
 
 
@@ -48,6 +50,7 @@ extern void Ea_Init(const Ea_ConfigType* ConfigPtr)
 	MemIf_Mode = MEMIF_MODE_SLOW;
 	Local_ChangeModeFlag=0;
 	local_IsInvalidateRequest=false;
+	local_IsEraseRequest=false;
 	Local_NumberOfPhysicalPagesPerBlock=(EaBlockSize / EaVirtualPageSize);	
 	
 	/* init the version info */
@@ -130,6 +133,7 @@ extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataB
 {
 	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
 	{
+		Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * Local_NumberOfPhysicalPagesPerBlock ) ;
 		local_BlockNumber = BlockNumber;
 		local_BlockOffset = BlockOffset;
 		local_DataBufferPtr = DataBufferPtr;
@@ -378,9 +382,52 @@ extern void Ea_GetVersionInfo(Std_VersionInfoType* VersionInfoPtr)
 }
 
 //////////////////// Ea_EraseImmediateBlock Funftion ////////////////////////////
+/**
+*@func	EraseImmediateBlock
+*@brief Erases the block BlockNumber.
+*@param BlockNumber Number of logical block, also denoting start address of that block in EEPROM.
+*@return 	E_OK: The requested job has been accepted by the module.
+*			E_NOT_OK - only if DET is enabled: The requested job has not been accepted by the EA module.
+*/
 extern Std_ReturnType Ea_EraseImmediateBlock(uint16 BlockNumber)
 {
-	
+	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
+	{
+		#if EaDevErrorDetect == true
+		if((blockNumber == 0) || (blockNumber == 0xffff) )
+		{
+			// raise the development error EA_E_INVALID_BLOCK_NO
+			return E_NOT_OK;
+		}
+
+			#if EaImmediateData == false
+				// raise the development error EA_E_INVALID_BLOCK_NO
+				return E_NOT_OK;
+			#endif
+		#endif
+		local_IsEraseRequest =true;
+		Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * Local_NumberOfPhysicalPagesPerBlock ) ;
+		local_BlockNumber=BlockNumber;
+
+		return E_OK;
+	}
+	else
+	{
+		if(MemIf_Status == MEMIF_UNINIT)
+		{
+			#if EaDevErrorDetect == true
+				//raise the development error EA_E_UNINIT
+			#endif
+			return E_NOT_OK;
+		}
+		if(MemIf_Status == MEMIF_BUSY)
+		{
+			#if EaDevErrorDetect == true
+				//raise the development error EA_E_BUSY
+			#endif
+			return E_NOT_OK;
+		}
+	}
 	
 }
 
