@@ -228,8 +228,43 @@ extern MemIf_JobResultType Ea_GetJobResult(void)
 }
 
 //////////////////// Ea_InvalidateBlock Funftion ////////////////////////////
+/**
+*@func	InvalidateBlock function 
+*@brief Invalidates the block BlockNumber.
+*@param BlockNumber Number of logical block, also denoting start address of that block in EEPROM.
+*@return 	E_OK: The requested job has been accepted by the module.
+*			E_NOT_OK - only if DET is enabled: The requested job has not been accepted by the EA module.
+*/
 extern Std_ReturnType Ea_InvalidateBlock(uint16 BlockNumber)
 {
+	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
+	{
+		Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * Local_NumberOfPhysicalPagesPerBlock ) ;
+		local_Length = EaBlockSize;
+		local_DataBufferPtr = DataBufferPtr ;
+		
+		MemIf_Status = MEMIF_BUSY;
+		MemIf_JobResult = MEMIF_JOB_PENDING ;
+		
+		return E_OK;
+	}
+	else
+	{
+		if(MemIf_Status == MEMIF_UNINIT)
+		{
+			#if EaDevErrorDetect == true
+				//raise the development error EA_E_UNINIT
+			#endif
+			return E_NOT_OK;
+		}
+		if(MemIf_Status == MEMIF_BUSY)
+		{
+			#if EaDevErrorDetect == true
+				//raise the development error EA_E_BUSY
+			#endif
+			return E_NOT_OK;
+		}
+	}
 }
 
 //////////////////// Ea_GetVersionInfo Funftion ////////////////////////////
