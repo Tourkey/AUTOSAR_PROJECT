@@ -67,7 +67,7 @@ extern void Ea_Init(const Ea_ConfigType* ConfigPtr)
 
 extern void Ea_SetMode(MemIf_ModeType Mode)
 {
-	#if EaDevErrorDetect == true
+/* 	#if EaDevErrorDetect == true
 		if(MemIf_Status == MEMIF_UNINIT)
 		{
 			//raise the development error EA_E_UNINIT
@@ -90,6 +90,36 @@ extern void Ea_SetMode(MemIf_ModeType Mode)
 	else 
 	{
 		;
+	}
+ */	
+	switch (MemIf_Status)
+	{
+
+	#if EaDevErrorDetect == true
+	
+	case MEMIF_UNINIT:
+	//raise the development error EA_E_UNINIT
+	break;
+	
+	case MEMIF_BUSY:
+	//raise the development error EA_E_BUSY
+	break;
+	
+	#endif
+	
+	case MEMIF_IDLE:
+		MemIf_Mode = Mode ;
+		Local_ChangeModeFlag =1; // to be excecuted asynchronously inside the main function 
+
+	break;
+	
+	case MEMIF_BUSY_INTERNAL:
+		MemIf_Mode = Mode ;
+		Local_ChangeModeFlag =1; // to be excecuted asynchronously inside the main function 
+	break;
+	
+	default:
+	break;
 	}
 }
 
@@ -131,7 +161,7 @@ extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataB
 				//raise the development error EA_E_UNINIT
 				return E_NOT_OK;
 			}
-			if(MemIf_Status == MEMIF_BUSY)
+			else if(MemIf_Status == MEMIF_BUSY)
 			{
 				// raise the development error EA_E_BUSY 
 				return E_NOT_OK;
@@ -158,10 +188,7 @@ extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataB
 			}
 		#endif
 		
-		if(MemIf_Status == MEMIF_UNINIT)
-		{
-			return E_NOT_OK;
-		}
+		return E_NOT_OK;
 
 	}
 }
@@ -200,7 +227,7 @@ extern Std_ReturnType Ea_Write(uint16 BlockNumber,const uint8* DataBufferPtr)
 				//raise the development error EA_E_UNINIT
 				return E_NOT_OK;
 			}
-			if(MemIf_Status == MEMIF_BUSY)
+			else if(MemIf_Status == MEMIF_BUSY)
 			{
 				// raise the development error EA_E_BUSY 
 				return E_NOT_OK;
@@ -232,6 +259,28 @@ extern Std_ReturnType Ea_Write(uint16 BlockNumber,const uint8* DataBufferPtr)
 
 extern void Ea_Cancel(void)
 {
+	switch(MemIf_Status)
+	{
+	case MEMIF_BUSY:
+		Eep_Cancel();
+		MemIf_Status = MEMIF_IDLE;
+		MemIf_JobResultType = MEMIF_JOB_CANCELED ;
+	break;
+	
+	#if EaDevErrorDetect == true
+	
+	case MEMIF_UNINIT:
+		//raise the development error EA_E_UNINIT
+	break;
+	
+	default:
+	// raise the development error EA_E_INVALID_CANCEL.
+	break;
+	
+	#endif
+	
+	}
+/* 	
 	#if EaDevErrorDetect == true
 		if(MemIf_Status == MEMIF_UNINIT)
 		{
@@ -253,7 +302,7 @@ extern void Ea_Cancel(void)
 		MemIf_Status = MEMIF_IDLE;
 		MemIf_JobResultType = MEMIF_JOB_CANCELED ;
 	}
-	
+ */	
 }
 
 //////////////////// Ea_GetStatus Funftion ////////////////////////////
@@ -287,7 +336,7 @@ extern MemIf_StatusType Ea_GetStatus(void)
 
 extern MemIf_JobResultType Ea_GetJobResult(void)
 {
-	#if EaDevErrorDetect == true
+/* 	#if EaDevErrorDetect == true
 	if (MemIf_Status == MEMIF_UNINIT)
 	{
 		// raise the development error EA_E_UNINIT
@@ -296,6 +345,22 @@ extern MemIf_JobResultType Ea_GetJobResult(void)
 	#endif
 	
 	return MemIf_JobResult;
+ */	
+	switch(MemIf_Status)
+	{
+	
+	#if EaDevErrorDetect == true
+
+	case MEMIF_UNINIT:
+		// raise the development error EA_E_UNINIT
+		return MEMIF_JOB_FAILED ;
+	break;
+	#endif
+	
+	default:
+	return MemIf_JobResult;
+	break;	
+	}
 	
 }
 
