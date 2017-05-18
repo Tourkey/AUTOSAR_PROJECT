@@ -368,7 +368,7 @@ extern void Ea_GetVersionInfo(Std_VersionInfoType* VersionInfoPtr)
 	if(VersionInfoPtr == NULL_PTR)
 	{
 		#if EaDevErrorDetect == true
-				//raise the development error EA_E_PARAM_POINTER.
+			//raise the development error EA_E_PARAM_POINTER.
 		#endif
 	}
 	else
