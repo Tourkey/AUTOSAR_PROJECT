@@ -9,6 +9,10 @@ static uint16 local_BlockNumber;
 static uint16 local_BlockOffset;
 static uint8* local_DataBufferPtr;
 static uint16 local_Length;
+static EcucBooleanParamDef local_IsInvalidateRequest;
+
+
+
 
 static MemIf_StatusType MemIf_Status = MEMIF_UNINIT;
 static MemIf_JobResultType MemIf_JobResult ;
@@ -38,7 +42,7 @@ extern void Ea_Init(const Ea_ConfigType* ConfigPtr)
 	Local_PhysicalAddress=0;
 	MemIf_Mode = MEMIF_MODE_SLOW;
 	Local_ChangeModeFlag=0;
-	
+	local_IsInvalidateRequest=false;
 	Local_NumberOfPhysicalPagesPerBlock=(EaBlockSize / EaVirtualPageSize);	
 	
 	if ( (EaBlockSize > EaVirtualPageSize) && ( (EaBlockSize % EaVirtualPageSize) > 0 ) )
@@ -307,13 +311,10 @@ extern Std_ReturnType Ea_InvalidateBlock(uint16 BlockNumber)
 {
 	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
 	{
-		Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * Local_NumberOfPhysicalPagesPerBlock ) ;
-		local_Length = EaBlockSize;
-		local_DataBufferPtr = DataBufferPtr ;
-		
-		MemIf_Status = MEMIF_BUSY;
-		MemIf_JobResult = MEMIF_JOB_PENDING ;
-		
+		local_IsInvalidateRequest=true;
+
+		local_BlockNumber=BlockNumber;
+				
 		return E_OK;
 	}
 	else
