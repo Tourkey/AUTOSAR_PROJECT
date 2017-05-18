@@ -6,6 +6,16 @@
 #include "Eep.h"
 
 
+
+/*version info*/
+
+#define cfg_vendorID	1
+#define cfg_moduleID	1		
+#define cfg_sw_major_version	1		
+#define cfg_sw_minor_version	1	
+#define cfg_sw_patch_version	1
+
+
 /*General configuration of the EEPROM abstraction module. This container 
 lists block independent configuration parameters.*/
 

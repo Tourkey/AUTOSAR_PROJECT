@@ -419,7 +419,16 @@ extern Std_ReturnType Ea_InvalidateBlock(uint16 BlockNumber)
 */
 extern void Ea_GetVersionInfo(Std_VersionInfoType* VersionInfoPtr)
 {
-	
+	if(VersionInfoPtr == NULL_PTR)
+	{
+		#if EaDevErrorDetect == true
+				//raise the development error EA_E_PARAM_POINTER.
+		#endif
+	}
+	else
+	{
+		*VersionInfoPtr= local_VersionInfo;
+	}
 }
 
 //////////////////// Ea_EraseImmediateBlock Funftion ////////////////////////////
