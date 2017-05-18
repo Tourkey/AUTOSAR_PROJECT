@@ -15,14 +15,12 @@ static uint16 local_Length;
 static EcucBooleanParamDef local_IsInvalidateRequest;
 static EcucBooleanParamDef local_IsEraseRequest;
 
-<<<<<<< HEAD
 
 
 /*version info*/
 Std_VersionInfoType local_VersionInfo;
 
-=======
->>>>>>> 1c898ff27a9efd2e2d46e970efe188481cb6fff3
+
 static MemIf_StatusType MemIf_Status = MEMIF_UNINIT;
 static MemIf_JobResultType MemIf_JobResult ;
 static MemIf_ModeType MemIf_Mode;
