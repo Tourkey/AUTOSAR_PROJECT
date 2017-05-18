@@ -5,25 +5,29 @@
 #include "Ea_Cbk.h"
 
 
+
+/////////////////////// Local Variables ////////////////////////
+
 static uint16 local_BlockNumber;
 static uint16 local_BlockOffset;
 static uint8* local_DataBufferPtr;
 static uint16 local_Length;
 static EcucBooleanParamDef local_IsInvalidateRequest;
+<<<<<<< HEAD
 
 
 /*version info*/
 Std_VersionInfoType local_VersionInfo;
 
+=======
+>>>>>>> 1c898ff27a9efd2e2d46e970efe188481cb6fff3
 static MemIf_StatusType MemIf_Status = MEMIF_UNINIT;
 static MemIf_JobResultType MemIf_JobResult ;
-
 static MemIf_ModeType MemIf_Mode;
-
-static uint8 Local_ChangeModeFlag;
-
+static EcucBooleanParamDef Local_ChangeModeFlag;
 static uint16 Local_PhysicalAddress;
 static uint8 Local_NumberOfPhysicalPagesPerBlock;
+
 
 //////////////////// Ea_Init Funftion ////////////////////////////
 
@@ -76,31 +80,6 @@ extern void Ea_Init(const Ea_ConfigType* ConfigPtr)
 
 extern void Ea_SetMode(MemIf_ModeType Mode)
 {
-/* 	#if EaDevErrorDetect == true
-		if(MemIf_Status == MEMIF_UNINIT)
-		{
-			//raise the development error EA_E_UNINIT
-			return	;
-		}
-		
-		if(MemIf_Status == MEMIF_BUSY)
-		{
-			//raise the development error EA_E_BUSY
-			return	;
-		}
-		
-	#endif
-	
-	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
-	{
-		MemIf_Mode = Mode ;
-		Local_ChangeModeFlag =1; // to be excecuted asynchronously inside the main function 
-	}
-	else 
-	{
-		;
-	}
- */	
 	switch (MemIf_Status)
 	{
 
@@ -118,13 +97,13 @@ extern void Ea_SetMode(MemIf_ModeType Mode)
 	
 	case MEMIF_IDLE:
 		MemIf_Mode = Mode ;
-		Local_ChangeModeFlag =1; // to be excecuted asynchronously inside the main function 
+		Local_ChangeModeFlag =	true; // to be excecuted asynchronously inside the main function 
 
 	break;
 	
 	case MEMIF_BUSY_INTERNAL:
 		MemIf_Mode = Mode ;
-		Local_ChangeModeFlag =1; // to be excecuted asynchronously inside the main function 
+		Local_ChangeModeFlag =	true; // to be excecuted asynchronously inside the main function 
 	break;
 	
 	default:
@@ -289,29 +268,6 @@ extern void Ea_Cancel(void)
 	#endif
 	
 	}
-/* 	
-	#if EaDevErrorDetect == true
-		if(MemIf_Status == MEMIF_UNINIT)
-		{
-			//raise the development error EA_E_UNINIT
-			return ;
-		}
-		
-		if(MemIf_Status != MEMIF_BUSY)
-		{
-			// raise the development error EA_E_INVALID_CANCEL.
-			return ;
-		}
-		
-	#endif
-	
-	if (MemIf_Status == MEMIF_BUSY)
-	{
-		Eep_Cancel();
-		MemIf_Status = MEMIF_IDLE;
-		MemIf_JobResultType = MEMIF_JOB_CANCELED ;
-	}
- */	
 }
 
 //////////////////// Ea_GetStatus Funftion ////////////////////////////
@@ -345,16 +301,6 @@ extern MemIf_StatusType Ea_GetStatus(void)
 
 extern MemIf_JobResultType Ea_GetJobResult(void)
 {
-/* 	#if EaDevErrorDetect == true
-	if (MemIf_Status == MEMIF_UNINIT)
-	{
-		// raise the development error EA_E_UNINIT
-		return MEMIF_JOB_FAILED ;
-	}
-	#endif
-	
-	return MemIf_JobResult;
- */	
 	switch(MemIf_Status)
 	{
 	
@@ -434,19 +380,66 @@ extern void Ea_GetVersionInfo(Std_VersionInfoType* VersionInfoPtr)
 //////////////////// Ea_EraseImmediateBlock Funftion ////////////////////////////
 extern Std_ReturnType Ea_EraseImmediateBlock(uint16 BlockNumber)
 {
+	
+	
 }
 
 //////////////////// Ea_JobEndNotification Funftion ////////////////////////////
+
+#if EaPollingMode == false
+
+/**
+*@func		JobEndNotification function 
+*@brief 	Service to report to this module the successful end of an asynchronous operation.
+*@param  	None
+*@return 	None
+*/
 extern void Ea_JobEndNotification(void)
 {
+	if (MemIf_JobResult == MEMIF_JOB_PENDING)
+	{
+		MemIf_JobResult = MEMIF_JOB_OK;
+		Ea_NvMJobEndNotification();
+	}
+	else
+	{
+		;
+	}
+	
+	
 }
 
+#endif
 //////////////////// Ea_JobErrorNotification Funftion ////////////////////////////
+
+#if EaPollingMode == false
+
+/**
+*@func		JobErrorNotification function 
+*@brief 	Service to report to this module the failure of an asynchronous operation.
+*@param  	None
+*@return 	None
+*/
+
 extern void Ea_JobErrorNotification(void)
 {
+	if (MemIf_JobResult == MEMIF_JOB_PENDING)
+	{
+		MemIf_JobResult = MEMIF_JOB_FAILED;
+		Ea_NvMJobErrorNotification();
+	}
+	
+	else
+	{
+		;
+	}
+	
 }
+#endif
 
 //////////////////// Ea_MainFunction Funftion ////////////////////////////
 extern void Ea_MainFunction(void)
 {
+	
+	
 }
