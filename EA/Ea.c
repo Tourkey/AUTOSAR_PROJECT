@@ -402,6 +402,12 @@ extern Std_ReturnType Ea_InvalidateBlock(uint16 BlockNumber)
 }
 
 //////////////////// Ea_GetVersionInfo Funftion ////////////////////////////
+/**
+*@func	GetVersionInfo function 
+*@brief Service to get the version information of this module.
+*@param  VersionInfoPtr Pointer to standard version information structure.
+*@return 	None
+*/
 extern void Ea_GetVersionInfo(Std_VersionInfoType* VersionInfoPtr)
 {
 	
