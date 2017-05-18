@@ -12,7 +12,8 @@ static uint16 local_Length;
 static EcucBooleanParamDef local_IsInvalidateRequest;
 
 
-
+/*version info*/
+Std_VersionInfoType local_VersionInfo;
 
 static MemIf_StatusType MemIf_Status = MEMIF_UNINIT;
 static MemIf_JobResultType MemIf_JobResult ;
@@ -44,6 +45,14 @@ extern void Ea_Init(const Ea_ConfigType* ConfigPtr)
 	Local_ChangeModeFlag=0;
 	local_IsInvalidateRequest=false;
 	Local_NumberOfPhysicalPagesPerBlock=(EaBlockSize / EaVirtualPageSize);	
+	
+	/* init the version info */
+	local_VersionInfo.vendorID=0;
+	local_VersionInfo.moduleID=0;
+	local_VersionInfo.sw_major_version=0;
+	local_VersionInfo.sw_minor_version=0;
+	local_VersionInfo.sw_patch_version=0;
+	
 	
 	if ( (EaBlockSize > EaVirtualPageSize) && ( (EaBlockSize % EaVirtualPageSize) > 0 ) )
 	{
