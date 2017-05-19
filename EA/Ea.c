@@ -8,17 +8,25 @@
 
 /////////////////////// Local Variables ////////////////////////
 
-static uint16 local_BlockNumber;
-static uint16 local_BlockOffset;
-static uint8* local_DataBufferPtr;
-static uint16 local_Length;
-static EcucBooleanParamDef local_IsInvalidateRequest;
-static EcucBooleanParamDef local_IsEraseRequest;
+typedef struct
+{
+	EcucBooleanParamDef local_IsInvalidateRequest;
+	EcucBooleanParamDef local_IsEraseRequest;
 
+}local_flags_type;
 
+typedef struct
+{
+	uint16 local_BlockNumber;
+	uint16 local_BlockOffset;
+	uint8* local_DataBufferPtr;
+	uint16 local_Length;
 
-/*version info*/
-Std_VersionInfoType local_VersionInfo;
+}local_variable_type;
+
+static local_flags_type local_flags;
+static local_variable_type local_variable;
+
 
 
 static MemIf_StatusType MemIf_Status = MEMIF_UNINIT;
@@ -27,6 +35,9 @@ static MemIf_ModeType MemIf_Mode;
 static EcucBooleanParamDef Local_ChangeModeFlag;
 static uint16 Local_PhysicalAddress;
 static uint8 Local_NumberOfPhysicalPagesPerBlock;
+
+/*version info*/
+Std_VersionInfoType local_VersionInfo;
 
 
 //////////////////// Ea_Init Funftion ////////////////////////////
@@ -40,15 +51,15 @@ extern void Ea_Init(const Ea_ConfigType* ConfigPtr)
 {
 	MemIf_Status = 	MEMIF_BUSY_INTERNAL;
 	
-	local_BlockNumber = 0;
-	local_BlockOffset = 0;
-	local_DataBufferPtr = NULL_PTR;
-	local_Length = 0;
+	local_variable.local_BlockNumber = 0;
+	local_variable.local_BlockOffset = 0;
+	local_variable.local_DataBufferPtr = NULL_PTR;
+	local_variable.local_Length = 0;
 	Local_PhysicalAddress=0;
 	MemIf_Mode = MEMIF_MODE_SLOW;
 	Local_ChangeModeFlag=0;
-	local_IsInvalidateRequest=false;
-	local_IsEraseRequest=false;
+	local_flags.local_IsInvalidateRequest=false;
+	local_flags.local_IsEraseRequest=false;
 	Local_NumberOfPhysicalPagesPerBlock=(EaBlockSize / EaVirtualPageSize);	
 	
 	/* init the version info */
@@ -132,10 +143,10 @@ extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataB
 	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
 	{
 		Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * Local_NumberOfPhysicalPagesPerBlock ) ;
-		local_BlockNumber = BlockNumber;
-		local_BlockOffset = BlockOffset;
-		local_DataBufferPtr = DataBufferPtr;
-		local_Length = Length;
+		local_variable.local_BlockNumber = BlockNumber;
+		local_variable.local_BlockOffset = BlockOffset;
+		local_variable.local_DataBufferPtr = DataBufferPtr;
+		local_variable.local_Length = Length;
 		
 		MemIf_Status = MEMIF_BUSY;
 		MemIf_JobResult = MEMIF_JOB_PENDING;
@@ -200,8 +211,8 @@ extern Std_ReturnType Ea_Write(uint16 BlockNumber,const uint8* DataBufferPtr)
 	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
 	{
 		Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * Local_NumberOfPhysicalPagesPerBlock ) ;
-		local_Length = EaBlockSize;
-		local_DataBufferPtr = DataBufferPtr ;
+		local_variable.local_Length = EaBlockSize;
+		local_variable.local_DataBufferPtr = DataBufferPtr ;
 		
 		MemIf_Status = MEMIF_BUSY;
 		MemIf_JobResult = MEMIF_JOB_PENDING ;
@@ -333,9 +344,9 @@ extern Std_ReturnType Ea_InvalidateBlock(uint16 BlockNumber)
 {
 	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
 	{
-		local_IsInvalidateRequest=true;
+		local_flags.local_IsInvalidateRequest=true;
 
-		local_BlockNumber=BlockNumber;
+		local_variable.local_BlockNumber=BlockNumber;
 				
 		return E_OK;
 	}
@@ -403,9 +414,9 @@ extern Std_ReturnType Ea_EraseImmediateBlock(uint16 BlockNumber)
 				return E_NOT_OK;
 			#endif
 		#endif
-		local_IsEraseRequest =true;
+		local_flags.local_IsEraseRequest =true;
 		Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * Local_NumberOfPhysicalPagesPerBlock ) ;
-		local_BlockNumber=BlockNumber;
+		local_variable.local_BlockNumber=BlockNumber;
 
 		return E_OK;
 	}
