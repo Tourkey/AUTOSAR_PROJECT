@@ -17,24 +17,25 @@ typedef struct
 
 typedef struct
 {
+	uint8* local_DataBufferPtr;
 	uint16 local_BlockNumber;
 	uint16 local_BlockOffset;
-	uint8* local_DataBufferPtr;
 	uint16 local_Length;
-
+	MemIf_StatusType MemIf_Status = MEMIF_UNINIT;
+	MemIf_JobResultType MemIf_JobResult ;
+	MemIf_ModeType MemIf_Mode;
+	uint16 Local_PhysicalAddress;
+	EcucBooleanParamDef Local_ChangeModeFlag;
+	uint8 Local_NumberOfPhysicalPagesPerBlock;
+	
 }local_variable_type;
 
 static local_flags_type local_flags;
-static local_variable_type local_variable;
+static local_variable_type local_variable={NULL_PTR,0};
 
 
 
-static MemIf_StatusType MemIf_Status = MEMIF_UNINIT;
-static MemIf_JobResultType MemIf_JobResult ;
-static MemIf_ModeType MemIf_Mode;
-static EcucBooleanParamDef Local_ChangeModeFlag;
-static uint16 Local_PhysicalAddress;
-static uint8 Local_NumberOfPhysicalPagesPerBlock;
+
 
 /*version info*/
 Std_VersionInfoType local_VersionInfo;
@@ -49,18 +50,18 @@ Std_VersionInfoType local_VersionInfo;
 */
 extern void Ea_Init(const Ea_ConfigType* ConfigPtr)
 {
-	MemIf_Status = 	MEMIF_BUSY_INTERNAL;
+	local_variable.local_variable.MemIf_Status = 	MEMIF_BUSY_INTERNAL;
 	
 	local_variable.local_BlockNumber = 0;
 	local_variable.local_BlockOffset = 0;
 	local_variable.local_DataBufferPtr = NULL_PTR;
 	local_variable.local_Length = 0;
-	Local_PhysicalAddress=0;
-	MemIf_Mode = MEMIF_MODE_SLOW;
-	Local_ChangeModeFlag=0;
+	local_variable.Local_PhysicalAddress=0;
+	local_variable.MemIf_Mode = local_variable.MemIf_Mode_SLOW;
+	local_variable.Local_ChangeModeFlag=0;
 	local_flags.local_IsInvalidateRequest=false;
 	local_flags.local_IsEraseRequest=false;
-	Local_NumberOfPhysicalPagesPerBlock=(EaBlockSize / EaVirtualPageSize);	
+	local_variable.Local_NumberOfPhysicalPagesPerBlock=(EaBlockSize / EaVirtualPageSize);	
 	
 	/* init the version info */
 	local_VersionInfo.vendorID=0;
@@ -72,10 +73,10 @@ extern void Ea_Init(const Ea_ConfigType* ConfigPtr)
 	
 	if ( (EaBlockSize > EaVirtualPageSize) && ( (EaBlockSize % EaVirtualPageSize) > 0 ) )
 	{
-	Local_NumberOfPhysicalPagesPerBlock+=1;
+	local_variable.Local_NumberOfPhysicalPagesPerBlock+=1;
 	}
 	
-	MemIf_Status = MEMIF_IDLE;
+	local_variable.local_variable.MemIf_Status = MEMIF_IDLE;
 }
 
 
@@ -86,13 +87,13 @@ extern void Ea_Init(const Ea_ConfigType* ConfigPtr)
 /**
 *@func	SetMode function 
 *@brief Sets the mode of reading and writing operations.
-*@param Mode : The mode of opertaion, type MemIf_ModeType, Range:[MEMIF_MODE_SLOW,MEMIF_MODE_FAST].
+*@param Mode : The mode of opertaion, type local_variable.MemIf_ModeType, Range:[local_variable.MemIf_Mode_SLOW,local_variable.MemIf_Mode_FAST].
 *@return 	Void
 */
 
-extern void Ea_SetMode(MemIf_ModeType Mode)
+extern void Ea_SetMode(local_variable.MemIf_ModeType Mode)
 {
-	switch (MemIf_Status)
+	switch (local_variable.local_variable.MemIf_Status)
 	{
 
 	#if EaDevErrorDetect == true
@@ -108,14 +109,14 @@ extern void Ea_SetMode(MemIf_ModeType Mode)
 	#endif
 	
 	case MEMIF_IDLE:
-		MemIf_Mode = Mode ;
-		Local_ChangeModeFlag =	true; // to be excecuted asynchronously inside the main function 
+		local_variable.MemIf_Mode = Mode ;
+		local_variable.Local_ChangeModeFlag =	true; // to be excecuted asynchronously inside the main function 
 
 	break;
 	
 	case MEMIF_BUSY_INTERNAL:
-		MemIf_Mode = Mode ;
-		Local_ChangeModeFlag =	true; // to be excecuted asynchronously inside the main function 
+		local_variable.MemIf_Mode = Mode ;
+		local_variable.Local_ChangeModeFlag =	true; // to be excecuted asynchronously inside the main function 
 	break;
 	
 	default:
@@ -140,16 +141,16 @@ extern void Ea_SetMode(MemIf_ModeType Mode)
 */
 extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataBufferPtr,uint16 Length)
 {
-	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
+	if((local_variable.local_variable.MemIf_Status == MEMIF_IDLE) || (local_variable.local_variable.MemIf_Status == MEMIF_BUSY_INTERNAL))
 	{
-		Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * Local_NumberOfPhysicalPagesPerBlock ) ;
+		local_variable.Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * local_variable.Local_NumberOfPhysicalPagesPerBlock ) ;
 		local_variable.local_BlockNumber = BlockNumber;
 		local_variable.local_BlockOffset = BlockOffset;
 		local_variable.local_DataBufferPtr = DataBufferPtr;
 		local_variable.local_Length = Length;
 		
-		MemIf_Status = MEMIF_BUSY;
-		MemIf_JobResult = MEMIF_JOB_PENDING;
+		local_variable.local_variable.MemIf_Status = MEMIF_BUSY;
+		local_variable.MemIf_JobResult = MEMIF_JOB_PENDING;
 		
 		return E_OK;
 	}
@@ -157,12 +158,12 @@ extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataB
 	else
 	{
 		#if EaDevErrorDetect == true
-			if(MemIf_Status == MEMIF_UNINIT)
+			if(local_variable.local_variable.MemIf_Status == MEMIF_UNINIT)
 			{
 				//raise the development error EA_E_UNINIT
 				return E_NOT_OK;
 			}
-			else if(MemIf_Status == MEMIF_BUSY)
+			else if(local_variable.local_variable.MemIf_Status == MEMIF_BUSY)
 			{
 				// raise the development error EA_E_BUSY 
 				return E_NOT_OK;
@@ -208,14 +209,14 @@ extern Std_ReturnType Ea_Read(uint16 BlockNumber,uint16 BlockOffset,uint8* DataB
 
 extern Std_ReturnType Ea_Write(uint16 BlockNumber,const uint8* DataBufferPtr)
 {
-	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
+	if((local_variable.local_variable.MemIf_Status == MEMIF_IDLE) || (local_variable.local_variable.MemIf_Status == MEMIF_BUSY_INTERNAL))
 	{
-		Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * Local_NumberOfPhysicalPagesPerBlock ) ;
+		local_variable.Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * local_variable.Local_NumberOfPhysicalPagesPerBlock ) ;
 		local_variable.local_Length = EaBlockSize;
 		local_variable.local_DataBufferPtr = DataBufferPtr ;
 		
-		MemIf_Status = MEMIF_BUSY;
-		MemIf_JobResult = MEMIF_JOB_PENDING ;
+		local_variable.local_variable.MemIf_Status = MEMIF_BUSY;
+		local_variable.MemIf_JobResult = MEMIF_JOB_PENDING ;
 		
 		return E_OK;
 	}
@@ -223,12 +224,12 @@ extern Std_ReturnType Ea_Write(uint16 BlockNumber,const uint8* DataBufferPtr)
 	else
 	{
 		#if EaDevErrorDetect == true
-			if(MemIf_Status == MEMIF_UNINIT)
+			if(local_variable.local_variable.MemIf_Status == MEMIF_UNINIT)
 			{
 				//raise the development error EA_E_UNINIT
 				return E_NOT_OK;
 			}
-			else if(MemIf_Status == MEMIF_BUSY)
+			else if(local_variable.local_variable.MemIf_Status == MEMIF_BUSY)
 			{
 				// raise the development error EA_E_BUSY 
 				return E_NOT_OK;
@@ -260,12 +261,12 @@ extern Std_ReturnType Ea_Write(uint16 BlockNumber,const uint8* DataBufferPtr)
 
 extern void Ea_Cancel(void)
 {
-	switch(MemIf_Status)
+	switch(local_variable.local_variable.MemIf_Status)
 	{
 	case MEMIF_BUSY:
 		Eep_Cancel();
-		MemIf_Status = MEMIF_IDLE;
-		MemIf_JobResultType = MEMIF_JOB_CANCELED ;
+		local_variable.local_variable.MemIf_Status = MEMIF_IDLE;
+		local_variable.MemIf_JobResultType = MEMIF_JOB_CANCELED ;
 	break;
 	
 	#if EaDevErrorDetect == true
@@ -287,16 +288,16 @@ extern void Ea_Cancel(void)
 /**
 *@func	GetStatus function 
 *@brief get the status of MEMIF.
-*@return 	return MemIf_StatusType 
+*@return 	return local_variable.local_variable.MemIf_StatusType 
 *MEMIF_UNINIT: The EA module has not been initialized (yet).
 *MEMIF_IDLE: The EA module is currently idle.
 *MEMIF_BUSY: The EA module is currently busy.
 *MEMIF_BUSY_INTERNAL: The EA module is currently busy with internal management operations.
 */
 
-extern MemIf_StatusType Ea_GetStatus(void)
+extern local_variable.local_variable.MemIf_StatusType Ea_GetStatus(void)
 {
-	return MemIf_Status;		
+	return local_variable.local_variable.MemIf_Status;		
 }
 
 //////////////////// Ea_GetJobResult Funftion ////////////////////////////
@@ -304,7 +305,7 @@ extern MemIf_StatusType Ea_GetStatus(void)
 /**
 *@func	GetJobResult function 
 *@brief Service to return the JobResult.
-*@return 	MemIf_JobResultType 
+*@return 	local_variable.MemIf_JobResultType 
 *MEMIF_JOB_OK: The last job has been finished successfully. 
 *MEMIF_JOB_PENDING: The last job is waiting for execution or currently being executed. 
 *MEMIF_JOB_CANCELED: The last job has been canceled (which means it failed). 
@@ -312,9 +313,9 @@ extern MemIf_StatusType Ea_GetStatus(void)
 *MEMIF_BLOCK_INCONSISTENT: The requested block is inconsistent, it may contain corrupted data.
 */
 
-extern MemIf_JobResultType Ea_GetJobResult(void)
+extern local_variable.MemIf_JobResultType Ea_GetJobResult(void)
 {
-	switch(MemIf_Status)
+	switch(local_variable.local_variable.MemIf_Status)
 	{
 	
 	#if EaDevErrorDetect == true
@@ -326,7 +327,7 @@ extern MemIf_JobResultType Ea_GetJobResult(void)
 	#endif
 	
 	default:
-	return MemIf_JobResult;
+	return local_variable.MemIf_JobResult;
 	break;	
 	}
 	
@@ -342,7 +343,7 @@ extern MemIf_JobResultType Ea_GetJobResult(void)
 */
 extern Std_ReturnType Ea_InvalidateBlock(uint16 BlockNumber)
 {
-	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
+	if((local_variable.local_variable.MemIf_Status == MEMIF_IDLE) || (local_variable.local_variable.MemIf_Status == MEMIF_BUSY_INTERNAL))
 	{
 		local_flags.local_IsInvalidateRequest=true;
 
@@ -352,14 +353,14 @@ extern Std_ReturnType Ea_InvalidateBlock(uint16 BlockNumber)
 	}
 	else
 	{
-		if(MemIf_Status == MEMIF_UNINIT)
+		if(local_variable.local_variable.MemIf_Status == MEMIF_UNINIT)
 		{
 			#if EaDevErrorDetect == true
 				//raise the development error EA_E_UNINIT
 			#endif
 			return E_NOT_OK;
 		}
-		if(MemIf_Status == MEMIF_BUSY)
+		if(local_variable.local_variable.MemIf_Status == MEMIF_BUSY)
 		{
 			#if EaDevErrorDetect == true
 				//raise the development error EA_E_BUSY
@@ -400,7 +401,7 @@ extern void Ea_GetVersionInfo(Std_VersionInfoType* VersionInfoPtr)
 */
 extern Std_ReturnType Ea_EraseImmediateBlock(uint16 BlockNumber)
 {
-	if((MemIf_Status == MEMIF_IDLE) || (MemIf_Status == MEMIF_BUSY_INTERNAL))
+	if((local_variable.local_variable.MemIf_Status == MEMIF_IDLE) || (local_variable.local_variable.MemIf_Status == MEMIF_BUSY_INTERNAL))
 	{
 		#if EaDevErrorDetect == true
 		if((blockNumber == 0) || (blockNumber == 0xffff) )
@@ -415,21 +416,21 @@ extern Std_ReturnType Ea_EraseImmediateBlock(uint16 BlockNumber)
 			#endif
 		#endif
 		local_flags.local_IsEraseRequest =true;
-		Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * Local_NumberOfPhysicalPagesPerBlock ) ;
+		local_variable.Local_PhysicalAddress = ( (BlockNumber - 1 ) * EaVirtualPageSize * local_variable.Local_NumberOfPhysicalPagesPerBlock ) ;
 		local_variable.local_BlockNumber=BlockNumber;
 
 		return E_OK;
 	}
 	else
 	{
-		if(MemIf_Status == MEMIF_UNINIT)
+		if(local_variable.local_variable.MemIf_Status == MEMIF_UNINIT)
 		{
 			#if EaDevErrorDetect == true
 				//raise the development error EA_E_UNINIT
 			#endif
 			return E_NOT_OK;
 		}
-		if(MemIf_Status == MEMIF_BUSY)
+		if(local_variable.local_variable.MemIf_Status == MEMIF_BUSY)
 		{
 			#if EaDevErrorDetect == true
 				//raise the development error EA_E_BUSY
@@ -452,9 +453,9 @@ extern Std_ReturnType Ea_EraseImmediateBlock(uint16 BlockNumber)
 */
 extern void Ea_JobEndNotification(void)
 {
-	if (MemIf_JobResult == MEMIF_JOB_PENDING)
+	if (local_variable.MemIf_JobResult == MEMIF_JOB_PENDING)
 	{
-		MemIf_JobResult = MEMIF_JOB_OK;
+		local_variable.MemIf_JobResult = MEMIF_JOB_OK;
 		Ea_NvMJobEndNotification();
 	}
 	else
@@ -479,9 +480,9 @@ extern void Ea_JobEndNotification(void)
 
 extern void Ea_JobErrorNotification(void)
 {
-	if (MemIf_JobResult == MEMIF_JOB_PENDING)
+	if (local_variable.MemIf_JobResult == MEMIF_JOB_PENDING)
 	{
-		MemIf_JobResult = MEMIF_JOB_FAILED;
+		local_variable.MemIf_JobResult = MEMIF_JOB_FAILED;
 		Ea_NvMJobErrorNotification();
 	}
 	
